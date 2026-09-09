@@ -1,0 +1,21 @@
+{
+  "name": "adexto-monad",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Monad delivery leg for ADEXTO x402 cross-chain buys: pay USDC on Base, receive a bonding-curve token on Monad.",
+  "type": "module",
+  "engines": {
+    "node": ">=22.6"
+  },
+  "scripts": {
+    "probe": "node scripts/probe.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "ethers": "6.13.1"
+  },
+  "devDependencies": {
+    "@types/node": "22.10.1",
+    "typescript": "5.7.2"
+  }
+}
