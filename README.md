@@ -369,11 +369,17 @@ What was actually missing was smaller than it looked: **nobody had ever called
 both live markets while the vault had been accruing for 20 swaps.
 
 The threshold is the part worth explaining. One `executeBuyback` call costs roughly
-`0.0005 0G` in gas, and at current volume the $ADEXTO vault holds `0.000144 0G` — so
-burning on every fill would spend about 3.5x the value it destroyed. Autonomous does not
-mean *every time*; it means *no human decides*. The edge compares the vault against the
-live gas price and burns once it is worth at least 3x the trigger cost, so no burn ever
-costs more than it destroys, and every response reports the decision with its numbers.
+`0.0005 0G` in gas, and the vault accrues `0.000257 0G` per fill — so burning on every
+fill would spend about twice the value it destroyed. Autonomous does not mean *every
+time*; it means *no human decides*. The edge compares the vault against the live gas
+price and burns once it is worth at least 3x the trigger cost, so no burn ever costs
+more than it destroys, and every response reports the decision with its numbers.
+
+**Supply has already fallen.** The first buyback spent the vault in full and destroyed
+`7.110759702852663544 $ADEXTO`, moving total supply from `999,999,925.841335527761992555`
+to `999,999,918.730575824909329011`. Confirmed by reading `totalTokensBurned` on the
+curve and `totalSupply` on the token before and after, not from the receipt alone:
+[`0x792023ab…8ab66bc5`](https://chainscan.0g.ai/tx/0x792023abdcf0ce1af431cb717a874e0344d1e3f8b84223aeddeaff008ab66bc5).
 
 Pricing that loop was got wrong once, and it is worth recording because the error is
 instructive. The first live price was `0.02 USDC` per fill:
@@ -406,7 +412,7 @@ the price moved to `0.10 USDC`, where a 3% spread yields roughly `+$0.0016` per 
 | Cross-chain fill end to end | **verified on 0G** | two tx below, 16.2s |
 | Replay protection | **verified** | reused authorization refused |
 | Monad as a fill target | **not built** | worker is single-chain today |
-| Automated buyback and burn | **live, threshold-gated** | every fill pays the buyback fee leg; the edge spends the vault once it outweighs 3x the trigger gas |
+| Automated buyback and burn | **live, supply has fallen** | `7.110759702852663544 $ADEXTO` destroyed, vault spent to zero — [tx](https://chainscan.0g.ai/tx/0x792023abdcf0ce1af431cb717a874e0344d1e3f8b84223aeddeaff008ab66bc5) |
 | Monad indexing | **not built** | subgraph covers Base and Arbitrum |
 
 ---
