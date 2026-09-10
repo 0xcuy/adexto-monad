@@ -348,21 +348,32 @@ never a claim of failure, and never a charge without confirmation.
 
 ```mermaid
 flowchart TD
-    A["Agent pays 0.10 USDC on Base"] --> B["Protocol treasury"]
-    B -.->|"not built yet"| C["Buyback router on Monad"]
-    C -.-> D["executeBuyback on the curve"]
-    D -.-> E["burn"]
-    E -.-> F["circulating supply falls"]
+    A["Fill delivered: buy on the curve"] --> B["Buyback fee leg<br/>treasuryNative grows"]
+    B --> C{"Vault worth<br/>3x trigger gas?"}
+    C -->|"no"| D["Skip, reported in the response"]
+    C -->|"yes"| E["executeBuyback<br/>permissionless"]
+    E --> F["buy along the curve"]
+    F --> G["burn"]
+    G --> H["circulating supply falls"]
 
-    style C stroke-dasharray: 5 5
-    style D stroke-dasharray: 5 5
-    style E stroke-dasharray: 5 5
-    style F stroke-dasharray: 5 5
+    style D fill:#fffaf0
+    style H fill:#f0fff4
 ```
 
-The vault and its burn path already exist on-chain and the burn is permissionless. What
-does not exist is the leg feeding it from on-ramp revenue: today the USDC reaches the
-treasury address and is rebalanced by hand. The dashed edges stay dashed until it ships.
+There is nothing to route. `treasuryNative` can only be filled by the curve's own
+buyback fee leg — no external transfer can add to it — and an x402 delivery is itself a
+`buy`, so it pays that leg and the vault grows on every fill.
+
+What was actually missing was smaller than it looked: **nobody had ever called
+`executeBuyback`.** Read from chain before this shipped, `totalTokensBurned` was `0` on
+both live markets while the vault had been accruing for 20 swaps.
+
+The threshold is the part worth explaining. One `executeBuyback` call costs roughly
+`0.0005 0G` in gas, and at current volume the $ADEXTO vault holds `0.000144 0G` — so
+burning on every fill would spend about 3.5x the value it destroyed. Autonomous does not
+mean *every time*; it means *no human decides*. The edge compares the vault against the
+live gas price and burns once it is worth at least 3x the trigger cost, so no burn ever
+costs more than it destroys, and every response reports the decision with its numbers.
 
 Pricing that loop was got wrong once, and it is worth recording because the error is
 instructive. The first live price was `0.02 USDC` per fill:
@@ -389,13 +400,13 @@ the price moved to `0.10 USDC`, where a 3% spread yields roughly `+$0.0016` per 
 | `deployTrinity` path on Monad | **simulated, passing** | `staticCall` + `estimateGas`, no broadcast |
 | Any market on Monad | **none yet** | `totalProjectsCount` is `0` |
 | Trading terminal: chart, depth, feed, swap | **live** | parent repo, markets on 0G |
-| Permissionless buyback and burn | **live on-chain** | `executeBuyback` |
+| Permissionless buyback and burn | **live on-chain** | `executeBuyback` has no caller gate, verified by simulating it from a random address |
 | x402 quote and 402 challenge | **live** | edge worker |
 | EIP-3009 settlement with real funds | **verified** | Base tx below |
 | Cross-chain fill end to end | **verified on 0G** | two tx below, 16.2s |
 | Replay protection | **verified** | reused authorization refused |
 | Monad as a fill target | **not built** | worker is single-chain today |
-| On-ramp revenue into the buyback vault | **not built** | vault exists, nothing feeds it |
+| Automated buyback and burn | **live, threshold-gated** | every fill pays the buyback fee leg; the edge spends the vault once it outweighs 3x the trigger gas |
 | Monad indexing | **not built** | subgraph covers Base and Arbitrum |
 
 ---
