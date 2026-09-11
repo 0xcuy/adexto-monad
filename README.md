@@ -29,15 +29,17 @@ HTTP on-ramp that lets a buyer on another chain take a position without bridging
 > [`0xcuy/adexto`](https://github.com/0xcuy/adexto) and are consumed over public APIs.
 > Duplicating them here would create two sources of truth for one deployed contract.
 >
-> **Status, stated plainly.** The factory is live on Monad and its launch path is verified
-> by simulation, but **no market exists on Monad yet** and the fill leg still targets 0G.
-> Those two things are the work in progress. The [status matrix](#status) separates what
-> runs from what does not.
+> **Status, stated plainly.** A market is live on Monad and traded with real funds:
+> [**$PARCEL**](#the-live-monad-market), launched from this factory, tradable in the
+> terminal now. What is still missing is the fill leg — the x402 worker remains single-chain
+> and delivers on 0G, so a cross-chain buy cannot land on Monad yet. The
+> [status matrix](#status) separates what runs from what does not.
 
 ---
 
 ## Contents
 
+- [The live Monad market — $PARCEL](#the-live-monad-market)
 - [The market structure](#the-market-structure)
 - [The trading surface](#the-trading-surface)
 - [Why Monad, specifically](#why-monad-specifically)
@@ -50,6 +52,115 @@ HTTP on-ramp that lets a buyer on another chain take a position without bridging
 - [Quickstart](#quickstart)
 - [Repository boundary](#repository-boundary)
 - [Metropolis submission](#metropolis-submission)
+
+---
+
+## The live Monad market
+
+**Open the terminal:
+[`adexto.xyz/token/parcel?chain=143&tf=3600`](https://adexto.xyz/token/parcel?chain=143&tf=3600)**
+
+This is the reference market for everything below. It was created through the production
+studio at `adexto.xyz` — not a script and not a local build — so every screen a judge can
+open is the same screen that produced it. One transaction created the token, its curve and
+its full supply, with no liquidity deposit at any point.
+
+| | |
+| --- | --- |
+| Token | [`0xC0B02176D37C1a64A6B493335115dB5D6D645E1F`](https://monadscan.com/address/0xC0B02176D37C1a64A6B493335115dB5D6D645E1F) |
+| Curve | [`0x36F2E236Bd37830BbF52c1248DeE28770C8F4eCb`](https://monadscan.com/address/0x36F2E236Bd37830BbF52c1248DeE28770C8F4eCb) |
+| Launch tx | [`0x876dbd3b…10ea4396`](https://monadscan.com/tx/0x876dbd3bb9013c87720ee570fc1b988234a3b8f9686a1555f0f4dd8a10ea4396) |
+| Block · time | `103878638` · 2026-09-11 10:59:53 UTC |
+| Launch cost | `3,229,629` gas — **0.329422158 MON** at 102 gwei, gas only |
+| Supply | `1,000,000,000` PARCEL, 100% in the curve |
+| Opening reserve | `virtualNative` 174,888.464882 MON, virtual — never deposited |
+| Fee legs | depth 15 · creator 10 · buyback 5 bps, plus 10 bps protocol charged on top |
+| Agent | ERC-8004 `agentId` 10251, bound at creation, `agentBound` true |
+
+**Timeframes at the link.** `tf=3600` opens hourly candles, which is the widest view this
+market can currently fill. `tf=1` is where a market this young actually reads: five fills
+produce 116 one-second bars against 4 at one minute, because the sub-minute bucket is the
+only one that gives each fill its own candle.
+
+### The five trades, on chain
+
+All five are real swaps against the curve, executed through the terminal and the `/swap` page
+in one recorded session. `buy · buy · sell · buy · buy`, which is a shape a market makes
+rather than a demo script that only ever buys.
+
+| # | Side | Block | Amount | Transaction |
+| --- | --- | --- | --- | --- |
+| 1 | BUY | `103878737` | 0.035 MON → 199.3270 PARCEL | [`0xaa6a4df7…3ec23363`](https://monadscan.com/tx/0xaa6a4df7776aa4e705a8a5ff3aa83b2e85b71a008dad23b5ff8cc6983ec23363) |
+| 2 | BUY | `103878794` | 0.035 MON → 199.3269 PARCEL | [`0xa1ceaf56…ef37b424`](https://monadscan.com/tx/0xa1ceaf56b63c57d910f92f2cdb7b008551debac5b5e98bbed6c679a9ef37b424) |
+| 3 | SELL | `103878829` | 132.8846 PARCEL → 0.023147 MON | [`0x11608ef6…71b70abe`](https://monadscan.com/tx/0x11608ef6fbcc487614a89e108c436ef9449681bd36822f8f2ea1268371b70abe) |
+| 4 | BUY | `103878904` | 0.035 MON → 199.3269 PARCEL | [`0x2c58de3c…809ea66d`](https://monadscan.com/tx/0x2c58de3c3f8fc32e2b4533a2ff8df8cd0f9e953cc428e30c93fa4133809ea66d) |
+| 5 | BUY | `103878924` | 0.06125 MON → 348.8219 PARCEL | [`0x81c1de1a…1e155502`](https://monadscan.com/tx/0x81c1de1af5271719ca4882b7865f370ee0e2f7e1000e4dea87adc06d1e155502) |
+
+The sell is the row that matters. It went through `approve` then `sell` against the curve,
+which is the exit path a bonding curve is usually accused of not having — there is no
+graduation to an external pool here, so the curve has to be the venue in both directions or
+the market is a trap.
+
+Curve state after the session, read back from the contract:
+
+```
+swapCount           5
+treasuryNative      0.000094745003093472 MON   accrued to the buyback vault
+creatorOwed         0.00009625 MON             accrued from swap flow
+```
+
+### Measured settlement cost, not estimated
+
+Track 01 is judged on economics, so these are receipts rather than estimates. Every one is
+`status=1`.
+
+| Action | Gas | Cost at 102 gwei |
+| --- | --- | --- |
+| Launch — token + curve + supply, one tx | `3,229,629` | 0.329422158 MON |
+| First buy on a cold curve | `324,307` | 0.033079314 MON |
+| Steady-state buy | `119,851` | 0.012224802 MON |
+| Sell, including the `approve` leg | `145,288` | 0.014819376 MON |
+| **Five swaps, total** | — | **0.08667858 MON** |
+
+The first buy costs 2.7× a later one because it writes storage slots that do not exist yet on
+a curve nobody has touched. Quoting the cold number as typical would overstate the cost of
+trading here by almost three times, which is why both are listed separately rather than
+averaged into one figure.
+
+Whole session, launch plus five trades: **0.416 MON**, gas only, no deposit at any point.
+
+Creator revenue accrued from those swaps and was **claimed to zero** during the same session.
+That is the whole creator model: paid out of flow, never holding an allocation, so there is no
+supply overhang to disclose.
+
+### Why the history is stored rather than re-scanned
+
+The trade feed reads a stored copy of these five swaps, and the label says `on-chain` because
+each record carries its own `txHash`, `blockNumber` and block timestamp — verifiable one row
+at a time in the table above.
+
+That indirection is a Monad-specific constraint, not a shortcut. Monad's RPC caps
+`eth_getLogs` at **100 blocks per call**. With a 16-call budget per page load, the reachable
+window is 1,600 blocks — roughly eight minutes — so a live scan cannot see this market's own
+launch, and raising the budget would mean hundreds of sequential RPC calls for one page view.
+The swaps are therefore read once from chain and persisted, and an indexer is the real answer.
+That is exactly why [Monad indexing](#status) is still listed as not built.
+
+### $CURB, and why the count is 2
+
+`totalProjectsCount` on the Monad factory reads `2`. The other launch is `$CURB`
+([`0x8AB19c43…`](https://monadscan.com/address/0x8AB19c43Dc0b66240BF1404A6e78135C14836eE0)),
+the first market opened here. It was replaced by `$PARCEL` and its registry row was pulled, so
+it is no longer listed on the site.
+
+Nothing was taken from it, and that distinction is worth stating rather than glossing: the
+curve still holds its reserves — nothing can be withdrawn from a curve — it is still tradable
+directly against the contract, and the ticker stays claimed on this factory permanently
+because `symbolRegistry` has no release function. `totalProjectsCount` cannot fall either.
+Every launch that exists on chain is accounted for once in
+[`src/config/onchain-launches.json`](https://github.com/0xcuy/adexto/blob/main/src/config/onchain-launches.json)
+in the parent repo, and its consistency audit fails the build if an on-chain launch appears
+that the file does not explain.
 
 ---
 
@@ -403,9 +514,11 @@ the price moved to `0.10 USDC`, where a 3% spread yields roughly `+$0.0016` per 
 | --- | --- | --- |
 | Curve with immutable fee legs, no deposit, no owner | **live, 4 mainnets** | factory `0.11.0` |
 | `AdextoFactory` 0.11.0 on Monad | **verified** | read from chain, below |
-| `deployTrinity` path on Monad | **simulated, passing** | `staticCall` + `estimateGas`, no broadcast |
-| Any market on Monad | **none yet** | `totalProjectsCount` is `0` |
-| Trading terminal: chart, depth, feed, swap | **live** | parent repo, markets on 0G |
+| `deployTrinity` path on Monad | **executed on mainnet** | [`0x876dbd3b…`](https://monadscan.com/tx/0x876dbd3bb9013c87720ee570fc1b988234a3b8f9686a1555f0f4dd8a10ea4396), 3,229,629 gas, 0.3294 MON |
+| A market on Monad | **live and traded** | [$PARCEL](#the-live-monad-market) — `totalProjectsCount` is `2`, `swapCount` 5 |
+| Buying and selling on Monad | **both proven** | five swaps including an `approve` + `sell` exit |
+| Creator revenue on Monad | **accrued and claimed** | claimed to zero in the same session |
+| Trading terminal: chart, depth, feed, swap | **live on Monad** | [terminal link](https://adexto.xyz/token/parcel?chain=143&tf=3600) |
 | Permissionless buyback and burn | **live on-chain** | `executeBuyback` has no caller gate, verified by simulating it from a random address |
 | x402 quote and 402 challenge | **live** | edge worker |
 | EIP-3009 settlement with real funds | **verified** | Base tx below |
@@ -432,9 +545,39 @@ AdextoFactory        0x5800e9715a47a598fce9bc3B65a95FD6BeBf76A3
   ANTI_SNIPER_BPS    100
   AGENT_REGISTRY     0x8004A169FB4a3325136EB29fA0ceB6D2e539a432
   protocolTreasury   0x24268Fffc119ec5550F68e80D94476fD64daE967
-  totalProjectsCount 0
+  totalProjectsCount 2
 
-deployTrinity        simulated clean, 3,159,443 gas, ~0.322 MON at 102 gwei
+deployTrinity        EXECUTED, 3,229,629 gas, 0.329422158 MON at 102 gwei
+                     0x876dbd3bb9013c87720ee570fc1b988234a3b8f9686a1555f0f4dd8a10ea4396
+
+allProjects(0)       0x8AB19c43Dc0b66240BF1404A6e78135C14836eE0   $CURB    delisted
+allProjects(1)       0xC0B02176D37C1a64A6B493335115dB5D6D645E1F   $PARCEL  live
+```
+
+`allProjects(i)` returns the **token**, not the curve. Reading it the other way round puts
+the two addresses in the wrong fields, and both respond to enough calls that the mistake does
+not announce itself.
+
+The simulation that preceded this predicted 3,159,443 gas against 3,229,629 actually used —
+2.2% under. Recorded because the estimate is quoted elsewhere in this file's history, and a
+prediction is worth less once the real number exists.
+
+```
+$PARCEL curve       0x36F2E236Bd37830BbF52c1248DeE28770C8F4eCb
+  virtualNative      174888.464882 MON     virtual, never deposited
+  swapCount          5
+  depthFeeBps        15
+  creatorFeeBps      10
+  treasuryBuybackBps 5
+  treasuryNative     0.000094745003093472 MON
+  creatorOwed        0.00009625 MON
+
+$PARCEL token       0xC0B02176D37C1a64A6B493335115dB5D6D645E1F
+  symbol             PARCEL
+  name               Parcel Market
+  totalSupply        1000000000.0
+  agentBound         true
+  agentId            10251
 ```
 
 ### 0G Mainnet · 16661 — the proven benchmark
@@ -574,6 +717,18 @@ Built inside the window, with dated commits in the parent repository:
 | 0.11.0 broadcast to all four mainnets, Monad included | `e5fa698` | 2026-09-07 |
 | Cross-chain buy on-ramp | `e095163` | 2026-09-10 |
 | Integration reference page | `7f1ac4a` | 2026-09-10 |
+| ERC-8004 agent registered on Monad, `agentId` 10251 | `0x09f1f8bf…` on chain | 2026-09-11 |
+| **First market opened on Monad** and traded | `0x876dbd3b…` on chain | 2026-09-11 |
+| **$PARCEL launched through the live site** and traded five times | [see above](#the-live-monad-market) | 2026-09-11 |
+| Candle width made independent of bar count across every market | `dfad26a` | 2026-09-11 |
+| Monad read path cached and parallelised — 4.5s to 1.96s cold, 0.003s warm | `d47e246` | 2026-09-11 |
+
+The last two are listed because they are Monad-specific engineering rather than cosmetics.
+Monad's 100-block `eth_getLogs` cap meant the terminal re-ran sixteen sequential calls on
+every request and cached none of them, since the zero-result path returned before the cache
+was written — measured at five 4-second reads per thirty idle seconds against 38 ms for the
+same page on 0G. The chain with the narrowest log window was the only one whose reads were
+never remembered.
 
 Predating the window, and therefore **not** claimed as new: the bonding-curve concept with
 its earlier factory generations `0.9.0` and `0.10.0`, and the application shell — studio,

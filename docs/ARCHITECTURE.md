@@ -184,9 +184,18 @@ roughly `+$0.0016` per fill. This is recorded because the mistake is instructive
 spread was sized against the trade value while the dominant cost was **settlement gas on
 the payment chain**, which is independent of trade size.
 
-It also sets an expectation for Monad. Launch gas measured `~0.322 MON` at 102 gwei versus
-`~0.0127 0G` at 4 gwei for identical factory bytecode, so per-fill delivery cost must be
-re-measured on Monad rather than assumed to match 0G.
+It also set an expectation for Monad, and that expectation has now been **measured** rather
+than carried forward. A launch on Monad cost `0.329422158 MON` at 102 gwei against `~0.0127 0G`
+at 4 gwei for identical factory bytecode. The number that matters for delivery is the fill,
+not the launch, and on `$PARCEL` a steady-state buy cost `119,851` gas — `0.012224802 MON` —
+while the very first buy against an untouched curve cost `324,307` gas because it writes
+storage slots that do not exist yet.
+
+That 2.7× gap is the part worth carrying into the delivery design: a cross-chain fill that
+happens to be the first trade on a market pays nearly three times the steady-state cost, so a
+spread sized on the steady-state number would be underwater on exactly the fill most likely to
+be someone's first contact with the venue. Cold-start cost belongs in the quote, not in the
+average.
 
 ---
 
