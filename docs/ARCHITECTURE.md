@@ -201,8 +201,17 @@ average.
 
 ## Making delivery multi-chain
 
-The parent worker's configuration carries exactly one delivery endpoint, `OG_RPC`. That
-makes 0G not a choice but the only expressible destination.
+**Done, and paid for twice.** The worker used to carry exactly one delivery endpoint, `OG_RPC`,
+which made 0G not a choice but the only destination it could express. Worse, the failure was
+mute: the provider was built as `JsonRpcProvider(env.OG_RPC, market.chainId)`, so it passed the
+market's chain id correctly against an endpoint that answered a different one and threw
+`network changed: 143 => 16661`. Read as a broken RPC, it actually meant the destination had
+never been configured.
+
+The delivery RPC is now resolved from the market's chain id, and a chain with no endpoint is
+refused by naming the variable that would serve it instead of failing inside ethers. Two paid
+fills have since settled on Base and delivered on Monad; the transactions are in the
+[README](../README.md#the-cross-chain-buys-that-actually-happened).
 
 ```mermaid
 flowchart LR
@@ -229,6 +238,27 @@ Each target must carry its own RPC, native symbol, factory address with a verifi
 `VERSION`, agent registry, treasury, and a working explorer. The probe drift-checks the
 last three against the chain on every run, so a stale entry is caught before it reaches a
 payment path.
+
+### The constraint this does not remove
+
+Delivery spends the destination chain's native asset while the payment arrives as USDC on Base.
+Revenue and inventory therefore accumulate on different chains, so the MON that funds Monad
+fills has to be topped up by hand however well the margin performs. A paid request with an empty
+inventory is refused with `out_of_inventory` **before** the payment is taken, so nothing is at
+risk — but the refusal is a stock-out, not a bug, and it will keep happening until the loop
+closes.
+
+Monad publishes its own x402 facilitator, and it is the shape that would close it. Read from
+`GET https://x402-facilitator.molandak.org/supported`: it advertises `eip155:143` with the
+`exact` and `upto` schemes, signs from `0x7f6a2850669202519f0FE8aa912451238820Db86`, and settles
+USDC at `0x754704Bc059F8C67012fEd69BC8A327a5aafb603` — a real contract on Monad, `symbol` USDC,
+six decimals. It covers settlement gas itself.
+
+Settling a purchase in USDC **on Monad** would land the revenue on the same chain the inventory
+drains from, which turns manual rebalancing into a swap that can be automated. That is not built
+here, and it is listed as the reason to build it rather than as something that works. The
+Base-settled leg stays regardless: paying from the chain where a buyer already holds funds is
+the point of it, and a Monad-native leg answers a different question.
 
 ---
 

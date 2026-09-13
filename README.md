@@ -29,10 +29,11 @@ HTTP on-ramp that lets a buyer on another chain take a position without bridging
 > [`0xcuy/adexto`](https://github.com/0xcuy/adexto) and are consumed over public APIs.
 > Duplicating them here would create two sources of truth for one deployed contract.
 >
-> **Status, stated plainly.** A market is live on Monad and traded with real funds:
-> [**$PARCEL**](#the-live-monad-market), launched from this factory, tradable in the
-> terminal now. What is still missing is the fill leg — the x402 worker remains single-chain
-> and delivers on 0G, so a cross-chain buy cannot land on Monad yet. The
+> **Status, stated plainly.** Both halves now run on Monad with real funds. A market is live —
+> [**$PARCEL**](#the-live-monad-market), launched from this factory and tradable in the terminal
+> — and a buyer holding only USDC on Base can take a position in it without bridging and
+> without ever holding MON: [two paid fills](#the-cross-chain-buys-that-actually-happened) have
+> settled on Base and delivered on Monad. What is still missing is Monad indexing. The
 > [status matrix](#status) separates what runs from what does not.
 
 ---
@@ -58,7 +59,7 @@ HTTP on-ramp that lets a buyer on another chain take a position without bridging
 ## The live Monad market
 
 **Open the terminal:
-[`adexto.xyz/token/parcel?chain=143&tf=3600`](https://adexto.xyz/token/parcel?chain=143&tf=3600)**
+[`adexto.xyz/token/parcel?chain=143&tf=900`](https://adexto.xyz/token/parcel?chain=143&tf=900)**
 
 This is the reference market for everything below. It was created through the production
 studio at `adexto.xyz` — not a script and not a local build — so every screen a judge can
@@ -518,13 +519,14 @@ the price moved to `0.10 USDC`, where a 3% spread yields roughly `+$0.0016` per 
 | A market on Monad | **live and traded** | [$PARCEL](#the-live-monad-market) — `totalProjectsCount` is `2`, `swapCount` 5 |
 | Buying and selling on Monad | **both proven** | five swaps including an `approve` + `sell` exit |
 | Creator revenue on Monad | **accrued and claimed** | claimed to zero in the same session |
-| Trading terminal: chart, depth, feed, swap | **live on Monad** | [terminal link](https://adexto.xyz/token/parcel?chain=143&tf=3600) |
+| Trading terminal: chart, depth, feed, swap | **live on Monad** | [terminal link](https://adexto.xyz/token/parcel?chain=143&tf=900) |
 | Permissionless buyback and burn | **live on-chain** | `executeBuyback` has no caller gate, verified by simulating it from a random address |
 | x402 quote and 402 challenge | **live** | edge worker |
 | EIP-3009 settlement with real funds | **verified** | Base tx below |
-| Cross-chain fill end to end | **verified on 0G** | two tx below, 16.2s |
+| Cross-chain fill end to end | **verified on Monad and 0G** | [four tx below](#the-cross-chain-buys-that-actually-happened), 10.8s and 11.8s on Monad |
 | Replay protection | **verified** | reused authorization refused |
-| Monad as a fill target | **not built** | worker is single-chain today |
+| Monad as a fill target | **live, paid twice** | delivery RPC is chosen per market chain; `48,125.53 $PARCEL` delivered for `0.20 USDC` |
+| Payer needs MON or a bridge | **no** | the payer signs an EIP-3009 authorization and sends no transaction; tokens arrive straight from the curve |
 | Automated buyback and burn | **live, supply has fallen** | `7.110759702852663544 $ADEXTO` destroyed, vault spent to zero — [tx](https://chainscan.0g.ai/tx/0x792023abdcf0ce1af431cb717a874e0344d1e3f8b84223aeddeaff008ab66bc5) |
 | Monad indexing | **not built** | subgraph covers Base and Arbitrum |
 
@@ -594,10 +596,33 @@ deployTrinity        simulated clean, 3,168,379 gas, ~0.0127 0G at 4 gwei
 proven with real funds, so it is the number every Monad claim gets measured against instead
 of being measured against a hope.
 
-### The cross-chain buy that actually happened
+### The cross-chain buys that actually happened
 
-One request produced both legs. `-0.02 USDC` from the payer, `+0.02 USDC` to the treasury,
-tokens delivered above the quoted floor, 16.2 seconds end to end.
+Each row is one HTTP request that moved money on two chains. Every figure below was read from
+the transaction logs, not from the gateway's response — a 200 says the call did not throw,
+which is not the same as a token arriving.
+
+**Delivered on Monad.** The payer held USDC on Base, no MON, and signed nothing but an
+authorization.
+
+| # | Paid on Base | Delivered on Monad | Received | Round trip |
+| --- | --- | --- | --- | --- |
+| 1 | [`0xf95c7c66…7290f190`](https://basescan.org/tx/0xf95c7c66fab2fbc5b56b902fccba583d5f3def1538a8891883766b4e7290f190) | [`0x4df10f36…bd67088e`](https://monadscan.com/tx/0x4df10f36232107e52dbb925f9c056435ec4806d8068e00a84d732ba1bd67088e) | `24,091.244065390845787333 $PARCEL` | 11.8s |
+| 2 | [`0xfb744ca0…1b78f5da`](https://basescan.org/tx/0xfb744ca03aa5e755c297e7f1c088407dd55786023334f53d6cad10fb1b78f5da) | [`0x2b9540f8…aaf21e08`](https://monadscan.com/tx/0x2b9540f8bc2f34030d23d83b4ae7d96e5d687c8780a12d1cb2643677aaf21e08) | `24,034.289690016296025975 $PARCEL` | 10.8s |
+
+Read from the logs of those four transactions: both deliveries `status 1`, `99,888` gas each,
+and in each one the `Transfer` moves `$PARCEL` **from the curve straight to the payer** — there
+is no hop through an address we control, which is what "no custody" means here rather than a
+promise. On Base, `0.100000 USDC` leaves the payer and arrives at the treasury, exactly the
+quoted price, in `85,780` gas.
+
+**The delivery block is 6 and 7 seconds EARLIER than its settlement block.** That is not a
+timing artefact, it is [the ordering](#why-delivery-runs-before-the-charge) made visible: the
+tokens are sent before the charge is taken, so a delivery that fails costs us and never the
+buyer. The two block timestamps are the cheapest way to check that claim.
+
+**Delivered on 0G**, the leg that was proven first and is kept because it proves something
+different — that the payment path worked before delivery could reach more than one chain.
 
 | Leg | Chain | Transaction |
 | --- | --- | --- |
@@ -607,6 +632,17 @@ tokens delivered above the quoted floor, 16.2 seconds end to end.
 
 Replaying a spent authorization is refused with `invalid_transaction_state`, and no second
 transfer is broadcast.
+
+**Reproducible, which it was not before.** These are produced by
+[`scripts/x402-buy.mts`](https://github.com/0xcuy/adexto/blob/main/scripts/x402-buy.mts) in the
+parent repo: it reads the 402 challenge, signs the authorization, resends with `X-PAYMENT`, then
+verifies by reading both chains. Until it existed, the first two purchases were cited as
+evidence while nothing in either repo could re-derive them — the strongest claim resting on two
+hashes nobody could reproduce, including us. The signing deliberately uses a public Base RPC
+rather than our own relay, because a buyer should need none of our infrastructure.
+
+**What the payer never needed:** MON, a bridge, an account, an API key, or a transaction of
+their own.
 
 ---
 
