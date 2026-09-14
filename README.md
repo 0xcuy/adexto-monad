@@ -546,7 +546,7 @@ the price moved to `0.10 USDC`, where a 3% spread yields roughly `+$0.0016` per 
 | Monad as a fill target | **live, paid twice** | delivery RPC is chosen per market chain; `48,125.53 $PARCEL` delivered for `0.20 USDC` |
 | Payer needs MON or a bridge | **no** | the payer signs an EIP-3009 authorization and sends no transaction; tokens arrive straight from the curve |
 | Automated buyback and burn | **live, supply has fallen** | `7.110759702852663544 $ADEXTO` destroyed, vault spent to zero — [tx](https://chainscan.0g.ai/tx/0x792023abdcf0ce1af431cb717a874e0344d1e3f8b84223aeddeaff008ab66bc5) |
-| Monad indexing | **built, full history** | [Envio HyperIndex](#indexing-monad-with-envio) — 1.93M blocks in under 45s, every row checked against chain |
+| Monad indexing | **live, and publicly queryable** | [Envio HyperIndex](#indexing-monad-with-envio) — full history, [anonymous read-only GraphQL](#query-it-yourself-no-account-and-no-key), every row checked against chain |
 
 ---
 
@@ -580,6 +580,22 @@ the same constraint that limits a live scan to about eight minutes, seen from th
 RPC stays configured as a fallback. Worth being precise about what that covers: a HyperSync that
 answers badly, **not** one that never authenticates. With no `ENVIO_API_TOKEN` the indexer stops
 on the first fetch rather than quietly degrading.
+
+### Query it yourself, no account and no key
+
+```bash
+curl -s -X POST https://adexto.xyz/api/indexer/graphql \
+  -H 'content-type: application/json' \
+  -d '{"query":"{ Curve { id swapCount volumeNative totalProtocolFees } Swap_aggregate { aggregate { count } } }"}'
+```
+
+`GET` the same URL for the entity list and the live sync position. Introspection is on, so any
+GraphQL client can explore the schema.
+
+Read-only is enforced by the database role, not by the endpoint: unauthenticated requests map
+to a role with `select` permissions only, so the public schema has no mutation root — a
+`mutation` is answered with `no mutations exist`. Hasura's own admin surfaces, `/v1/metadata`
+and `/v2/query`, are not reachable through it.
 
 ### Verified against contract storage, not against itself
 
