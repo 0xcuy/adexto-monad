@@ -33,7 +33,9 @@ HTTP on-ramp that lets a buyer on another chain take a position without bridging
 > [**$PARCEL**](#the-live-monad-market), launched from this factory and tradable in the terminal
 > — and a buyer holding only USDC on Base can take a position in it without bridging and
 > without ever holding MON: [two paid fills](#the-cross-chain-buys-that-actually-happened) have
-> settled on Base and delivered on Monad. Monad is indexed too —
+> settled on Base and delivered on Monad. The same router now delivers on all four mainnets,
+> and an AI agent can complete a purchase through an MCP server — with the signing key named
+> rather than glossed over. Monad is indexed too —
 > [Envio HyperIndex](#indexing-monad-with-envio), full history, verified against chain. The
 > [status matrix](#status) separates what runs from what does not.
 
@@ -112,21 +114,30 @@ treasuryNative      0.000094745003093472 MON   accrued to the buyback vault
 creatorOwed         0.00009625 MON             accrued from swap flow
 ```
 
-**Read again today it says `swapCount 7`, and the two extra fills are the point rather than a
-correction.** They are the [cross-chain x402 buys](#the-cross-chain-buys-that-actually-happened):
-an x402 delivery is an ordinary `buy` against this curve, so it pays the same fee legs as
-anything else and the counter moves. Nothing separate had to be wired for that.
+**Read again today it says `swapCount 12`, and the extra fills are the point rather than a
+correction.** Two of them are the [cross-chain x402 buys](#the-cross-chain-buys-that-actually-happened)
+and the rest are ordinary trading since. An x402 delivery is an ordinary `buy` against this
+curve, so it pays the same fee legs as anything else and the counter moves. Nothing separate
+had to be wired for that.
 
 ```
-swapCount           7
-treasuryNative      0.004320156479526491 MON   grew 45× on two paid fills
-creatorOwed         0.008547072952866038 MON
+swapCount           12
+treasuryNative      0.004416353983441502 MON   grew 46x on the fills since
+creatorOwed         0.008739467960696060 MON
+protocolOwed        0.008832707966883004 MON
+totalVolumeNative   8.832707966883005472 MON
 ```
 
 The buyback vault filling up on its own is worth noticing: `treasuryNative` is fillable only
 by the curve's own buyback fee leg, and the x402 fills paid it without anything routing
 revenue anywhere. `totalTokensBurned` is still `0` because the burn fires on a gas threshold,
-which is the gate working rather than a gap.
+which is the gate working rather than a gap — and it is worth saying plainly that the
+threshold has never been crossed on this market, so the burn is proven on 0G and not here.
+
+Checkable without trusting any of the above: the protocol leg is 10 bps of gross volume, so
+`totalVolumeNative / 1000` should equal `protocolOwed` while nothing has been claimed.
+`8832707966883005472 / 1000` is `8832707966883005`, against `8832707966883004` stored — one wei
+of integer truncation, which is the arithmetic agreeing rather than a discrepancy.
 
 ### Measured settlement cost, not estimated
 
@@ -534,16 +545,17 @@ the price moved to `0.10 USDC`, where a 3% spread yields roughly `+$0.0016` per 
 | Curve with immutable fee legs, no deposit, no owner | **live, 4 mainnets** | factory `0.11.0` |
 | `AdextoFactory` 0.11.0 on Monad | **verified** | read from chain, below |
 | `deployTrinity` path on Monad | **executed on mainnet** | [`0x876dbd3b…`](https://monadscan.com/tx/0x876dbd3bb9013c87720ee570fc1b988234a3b8f9686a1555f0f4dd8a10ea4396), 3,229,629 gas, 0.3294 MON |
-| A market on Monad | **live and traded** | [$PARCEL](#the-live-monad-market) — `totalProjectsCount` is `2`, `swapCount` 5 |
-| Buying and selling on Monad | **both proven** | five swaps including an `approve` + `sell` exit |
+| A market on Monad | **live and traded** | [$PARCEL](#the-live-monad-market) — `totalProjectsCount` is `2`, `swapCount` now `12` |
+| Buying and selling on Monad | **both proven** | the first five swaps include an `approve` + `sell` exit; seven more have landed since |
 | Creator revenue on Monad | **accrued and claimed** | claimed to zero in the same session |
 | Trading terminal: chart, depth, feed, swap | **live on Monad** | [terminal link](https://adexto.xyz/token/parcel?chain=143&tf=900) |
 | Permissionless buyback and burn | **live on-chain** | `executeBuyback` has no caller gate, verified by simulating it from a random address |
 | x402 quote and 402 challenge | **live** | edge worker |
 | EIP-3009 settlement with real funds | **verified** | Base tx below |
-| Cross-chain fill end to end | **verified on Monad and 0G** | [four tx below](#the-cross-chain-buys-that-actually-happened), 10.8s and 11.8s on Monad |
+| Cross-chain fill end to end | **verified on all four mainnets** | [four tx below](#the-cross-chain-buys-that-actually-happened) for Monad and 0G, 10.8s and 11.8s on Monad; Arbitrum and Base followed once they had markets — hashes in the [parent README](https://github.com/0xcuy/adexto#-honest-status) |
 | Replay protection | **verified** | reused authorization refused |
 | Monad as a fill target | **live, paid twice** | delivery RPC is chosen per market chain; `48,125.53 $PARCEL` delivered for `0.20 USDC` |
+| An AI agent completing the purchase | **live, and the signer is named** | seven MCP tools at [`adexto.xyz/api/mcp`](https://adexto.xyz/mcp). An agent on `zerog/glm-5.3` discovered a market, quoted it and bought it. The EIP-3009 authorization is signed by the **operator's key on the server**, not by the agent — so the claim is that the agent decided and executed, not that it paid from its own funds |
 | Payer needs MON or a bridge | **no** | the payer signs an EIP-3009 authorization and sends no transaction; tokens arrive straight from the curve |
 | Automated buyback and burn | **live, supply has fallen** | `7.110759702852663544 $ADEXTO` destroyed, vault spent to zero — [tx](https://chainscan.0g.ai/tx/0x792023abdcf0ce1af431cb717a874e0344d1e3f8b84223aeddeaff008ab66bc5) |
 | Monad indexing | **live, and publicly queryable** | [Envio HyperIndex](#indexing-monad-with-envio) — full history, [anonymous read-only GraphQL](#query-it-yourself-no-account-and-no-key), every row checked against chain |
@@ -603,13 +615,20 @@ An indexer that is internally consistent can still be uniformly wrong, so every 
 compared with what the curve contract stores — including the live fee ledger
 (`treasuryNative`, `creatorOwed`, `protocolOwed`) rather than only derived totals.
 
+Read from the curves today. `$CURB` is frozen because it stopped being traded when it was
+delisted; `$PARCEL` keeps moving, so **these are the values at the time of writing and not
+constants** — the check that matters is the method, and re-running it should produce newer
+numbers that still agree with each other.
+
 | | $CURB | $PARCEL |
 | --- | --- | --- |
-| `swapCount` | 5 | 7 |
-| `totalVolumeNative` | `104240006234326264` | `8640312959052983405` |
-| `totalDepthFeesRetained` | `156360009351489` | `12960469438579474` |
-| `treasuryNative` | `52120003117163` | `4320156479526491` |
-| `creatorOwed` | `11000000000000` | `8547072952866038` |
+| `swapCount` | 5 | 12 |
+| `totalVolumeNative` | `104240006234326264` | `8832707966883005472` |
+| `totalDepthFeesRetained` | `156360009351489` | `13249061950324507` |
+| `treasuryNative` | `52120003117163` | `4416353983441502` |
+| `creatorOwed` | `11000000000000` | `8739467960696060` |
+| `protocolOwed` | `104240006234326` | `8832707966883004` |
+| `totalTokensBurned` | `0` | `0` |
 | ERC-8004 | agent `10251` | agent `10251` |
 
 **Two of the twenty-two comparisons did not match on the first run, and that is the useful
@@ -693,12 +712,15 @@ prediction is worth less once the real number exists.
 ```
 $PARCEL curve       0x36F2E236Bd37830BbF52c1248DeE28770C8F4eCb
   virtualNative      174888.464882 MON     virtual, never deposited
-  swapCount          5
+  swapCount          12                    5 by hand, 2 paid over x402, 5 since
   depthFeeBps        15
   creatorFeeBps      10
   treasuryBuybackBps 5
-  treasuryNative     0.000094745003093472 MON
-  creatorOwed        0.00009625 MON
+  treasuryNative     0.004416353983441502 MON
+  creatorOwed        0.008739467960696060 MON
+  protocolOwed       0.008832707966883004 MON
+  totalVolumeNative  8.832707966883005472 MON
+  totalTokensBurned  0                     vault below the gas threshold
 
 $PARCEL token       0xC0B02176D37C1a64A6B493335115dB5D6D645E1F
   symbol             PARCEL
@@ -713,14 +735,23 @@ $PARCEL token       0xC0B02176D37C1a64A6B493335115dB5D6D645E1F
 ```
 AdextoFactory        0x51c4168226463F7e5A141e1c6D30520734BC840a
   VERSION            0.11.0        (identical bytecode length to Monad)
-  totalProjectsCount 2
+  totalProjectsCount 3             $ADEXTO, $ADT, $ZEEBO
 
 deployTrinity        simulated clean, 3,168,379 gas, ~0.0127 0G at 4 gwei
 ```
 
-0G stays in the registry on purpose. It is the only fill target whose payment path has been
-proven with real funds, so it is the number every Monad claim gets measured against instead
-of being measured against a hope.
+0G stays in the registry on purpose. It was the first fill target whose payment path was
+proven with real funds, and it is still where the burn path is proven, so it is the number
+every Monad claim gets measured against instead of being measured against a hope.
+
+**All four mainnets are now fill targets, and that changes what Monad is being compared to.**
+`DELIVERY_RPC` in the worker maps a market's `chainId` to its own endpoint, so Base and
+Arbitrum became targets by getting a market rather than by getting new code. Read back from
+chain, all `status 1`, all submitted by the relayer `0xDe1f5e5505c01aC6C847146fF76E0e067A49C627`:
+`$WOMBO` delivered on Arbitrum at block `505674141`, `$BLOOP` at Base block `51375604`, and
+`$ZEEBO` on 0G at block `44560323` with its settlement on Base at `51419336`. Monad is no
+longer the only chain proving the router — it is the chain where the router was first proven
+against something other than 0G.
 
 ### The cross-chain buys that actually happened
 
