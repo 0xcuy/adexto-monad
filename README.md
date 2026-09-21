@@ -744,6 +744,16 @@ deployTrinity        simulated clean, 3,168,379 gas, ~0.0127 0G at 4 gwei
 proven with real funds, and it is still where the burn path is proven, so it is the number
 every Monad claim gets measured against instead of being measured against a hope.
 
+**One thing Monad now has that 0G does not: a live market with an ERC-8004 binding.** The
+first `$ADEXTO` market on 0G was bound to `agentId 3545431`, and relaunching it onto the
+`0.11.0` factory to gain the protocol fee leg sent `bindAgent: false` — hard-coded in the
+relaunch script. `agentBound` is `immutable`, so the live `$ADEXTO` at
+[`0xA1358C17…1DF7`](https://chainscan.0g.ai/address/0xA1358C17004469C7CA5365AbafD294F9b2c11DF7)
+reads `agentBound false` permanently. `$PARCEL` and `$CURB` here read `agentBound true,
+agentId 10251` and were never relaunched, so Monad is where that property is still
+observable on a listed market. The script is fixed and now refuses to launch unbound when
+the market it replaces was bound, but the fix cannot reach a market that already exists.
+
 **All four mainnets are now fill targets, and that changes what Monad is being compared to.**
 `DELIVERY_RPC` in the worker maps a market's `chainId` to its own endpoint, so Base and
 Arbitrum became targets by getting a market rather than by getting new code. Read back from
