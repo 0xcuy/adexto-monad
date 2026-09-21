@@ -8,3 +8,9 @@ dist/
 # Wrangler
 .wrangler/
 .dev.vars
+
+# Screenshot mentah dari WhatsApp. Berkas yang dipakai sudah ada di
+# adexto/public/recognition/ dengan nama yang menjelaskan isinya, dan disajikan
+# di adexto.xyz/recognition. Menyimpan salinan kedua di sini berarti dua tempat
+# yang bisa berbeda, dan yang di repo ini tidak ada yang membacanya.
+docs/Image/

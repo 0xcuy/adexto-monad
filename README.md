@@ -9,6 +9,8 @@ the first block, and can be bought into from another chain.**
 ![Fees](https://img.shields.io/badge/fee_rates-immutable-2b7489)
 ![Base](https://img.shields.io/badge/Base-8453-0052FF)
 ![x402](https://img.shields.io/badge/on--ramp-x402_v2-000000)
+![Indexer](https://img.shields.io/badge/Envio_HyperIndex-publicly_queryable-1a8f6b)
+![ERC-8004](https://img.shields.io/badge/ERC--8004-agentId_10251_bound-2b7489)
 ![Build window](https://img.shields.io/badge/Metropolis-1_Sep_→_13_Oct_2026-orange)
 
 Launching a token normally means funding a pool before anyone can trade it. That deposit
@@ -57,6 +59,7 @@ HTTP on-ramp that lets a buyer on another chain take a position without bridging
 - [Quickstart](#quickstart)
 - [Repository boundary](#repository-boundary)
 - [Metropolis submission](#metropolis-submission)
+- [Outside recognition](#outside-recognition-and-why-it-is-listed-separately)
 
 ---
 
@@ -559,6 +562,8 @@ the price moved to `0.10 USDC`, where a 3% spread yields roughly `+$0.0016` per 
 | Payer needs MON or a bridge | **no** | the payer signs an EIP-3009 authorization and sends no transaction; tokens arrive straight from the curve |
 | Automated buyback and burn | **live, supply has fallen** | `7.110759702852663544 $ADEXTO` destroyed, vault spent to zero — [tx](https://chainscan.0g.ai/tx/0x792023abdcf0ce1af431cb717a874e0344d1e3f8b84223aeddeaff008ab66bc5) |
 | Monad indexing | **live, and publicly queryable** | [Envio HyperIndex](#indexing-monad-with-envio) — full history, [anonymous read-only GraphQL](#query-it-yourself-no-account-and-no-key), every row checked against chain |
+| Monad read path | **moved to Alchemy, measured not assumed** | `eth_getLogs` span went 100 → 500,000, so a market's full history is one or two calls instead of sixteen that reached ten minutes. Every Monad endpoint was probed by raising the range until it was rejected: public RPC 100, another provider ~968, a third ~20,000, Alchemy's shared endpoint over twenty million. Verified it is really Alchemy by a method the public RPC rejects and by a response header, not by trusting a provider table. The **keyed** free-tier endpoint is deliberately unused — it caps `eth_getLogs` at ten blocks, worse than the public RPC it would replace |
+| Contract audit by a third party | **no, and not claimed** | Eight analysers and fuzzers run against the contracts and are published with every finding triaged, but no human firm has reviewed them. Stated here because a status table that only lists what works is marketing |
 
 ---
 
