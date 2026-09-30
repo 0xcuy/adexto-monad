@@ -1,7 +1,27 @@
-# adexto-monad
+# ADEXTO on Monad
 
-**A bonding-curve market that opens on Monad with no liquidity deposit, is tradable from
-the first block, and can be bought into from another chain.**
+**Market infrastructure for the agent economy.** An agent opens a market bound to its on-chain
+identity, earns from every trade in it, and can be bought by other agents paying USDC from another
+chain. The terms are fixed in bytecode with no admin key, so nobody can change what an agent is
+paid, including us.
+
+| | What happens | Read it on chain |
+| --- | --- | --- |
+| **Open** | An agent calls `deployTrinity` with its ERC-8004 `agentId`, and the factory refuses unless `ownerOf(agentId)` is the caller. Nothing is deposited: the token opens inside a bonding curve against a virtual reserve, with 100% of supply in the curve | `agentIdOf(token)`, `AgentBound` |
+| **Earn** | The launching address is the curve's immutable `creator` and takes a fixed share of every trade, claimable in the chain's native asset | `creatorOwed()`, `claimCreatorFees()` |
+| **Get bought** | Another agent finds the market over MCP, receives an HTTP 402 quote, and pays USDC on Base by signing an EIP-3009 authorization with its own wallet. The token is delivered on the market's chain before the payment settles | `buy_token` at `adexto.xyz/api/mcp` |
+| **Verify** | Fees, treasury and supply are readable before anyone trades, and there is no owner, proxy, pause or withdraw function | `totalFeeBps()`, `protocolTreasury()` |
+
+Launchpads are built for people clicking buttons. An agent needs a market it can open without
+asking anyone, terms it can check without trusting anyone, and buyers who can pay it from wherever
+their money already is. Today an agent opens a market with a direct contract call; an MCP tool for
+opening one is next.
+
+**On Monad** each step has run on mainnet with real funds. The live market
+[**$PARCEL**](#the-live-monad-market) was opened bound to ERC-8004 `agentId 10251`, accrues its
+creator's share on every trade, and took
+[two fills paid in USDC on Base](#the-cross-chain-buys-that-actually-happened) that were delivered
+on Monad without the payer ever holding MON.
 
 ![Monad Mainnet](https://img.shields.io/badge/Monad_Mainnet-143-836EF9)
 ![Track](https://img.shields.io/badge/track-01_Onchain_Finance_%26_Trading-836EF9)
@@ -13,17 +33,18 @@ the first block, and can be bought into from another chain.**
 ![ERC-8004](https://img.shields.io/badge/ERC--8004-agentId_10251_bound-2b7489)
 ![Build window](https://img.shields.io/badge/Metropolis-1_Sep_→_13_Oct_2026-orange)
 
-Launching a token normally means funding a pool before anyone can trade it. That deposit
-is the real barrier, not the gas: it has to be paid per chain, it is the thing a creator
-can pull, and it is why most launch venues end up custodial in practice.
+Launching a token normally means funding a pool before anyone can trade it. That deposit is the
+real barrier, not the gas: it has to be paid per chain, it is the thing a creator can pull, and it
+is exactly what an agent does not have.
 
-This one opens a market against a **virtual reserve**. There is no deposit, 100% of supply
-enters the curve at genesis, the curve *is* the permanent venue — no graduation step, no
-external pool, no owner, and no withdrawal function anywhere on the path. Every fee rate is
+The market an agent opens here trades against a **virtual reserve** instead. There is no deposit,
+100% of supply enters the curve at genesis, and the curve *is* the permanent venue — no graduation
+step, no external pool, no owner, and no withdrawal function anywhere on the path. Every fee rate is
 `immutable`. The creator earns from swap flow instead of holding an allocation.
 
-On top of that sits a trading terminal built for markets that are minutes old, and an
-HTTP on-ramp that lets a buyer on another chain take a position without bridging.
+On top of that sits a trading terminal built for markets that are minutes old, for the people who
+trade beside the agents, and an HTTP on-ramp that lets a buyer on another chain take a position
+without bridging.
 
 > **Where each piece lives.** This repository holds the Monad-specific engineering: the
 > multi-chain delivery registry, the Monad fill leg, the buyback router, and a read-only
@@ -909,7 +930,9 @@ window 1 September to 13 October 2026.
 **Track 01 — Onchain Finance & Trading.** The track asks for new asset primitives, market
 structures and trading experiences enabled by fast, cheap settlement. All three are the
 subject here: a curve that opens without a deposit and cannot be withdrawn from, a terminal
-built for markets minutes old, and settlement economics measured rather than asserted.
+built for markets minutes old, and settlement economics measured rather than asserted. Framing
+it as infrastructure for agents does not move it out of this track: what an agent opens, is paid
+by and is bought through is a market structure.
 
 Track 04 was rejected deliberately. Its core is trust, provenance and user-owned data, and
 this project does not do provenance — the 0G router's Intel TDX attestation is read as a
