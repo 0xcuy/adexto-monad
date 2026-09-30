@@ -37,10 +37,16 @@ export interface ChainTarget {
    * palsu, bukan explorer-nya yang menolak.
    */
   explorer: string;
-  /** AdextoFactory generasi aktif. Sudah diverifikasi ke chain. */
+  /** AdextoFactory tempat pasar yang hidup di chain ini lahir. Sudah diverifikasi ke chain. */
   factory: string;
   /** `VERSION` yang dibaca dari kontrak di alamat di atas. */
   factoryVersion: string;
+  /**
+   * ADEXTO v1 (AdextoFactory 1.0.0): tempat setiap peluncuran BARU di chain ini terjadi.
+   * Pasar lama tetap di `factory` di atas selamanya, karena setiap kaki fee-nya immutable.
+   */
+  launchFactory: string;
+  launchFactoryVersion: string;
   /** Registry identitas ERC-8004 yang dipakai factory saat mengikat agent. */
   agentRegistry: string;
   /** Penerima kaki fee protokol. */
@@ -56,6 +62,8 @@ export const MONAD: ChainTarget = {
   explorer: "https://monadscan.com",
   factory: "0x5800e9715a47a598fce9bc3B65a95FD6BeBf76A3",
   factoryVersion: "0.11.0",
+  launchFactory: "0x3dFcBEd7dd889F465cC9f75c430B43Ef873b6056",
+  launchFactoryVersion: "1.0.0",
   agentRegistry: "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
   protocolTreasury: "0x24268Fffc119ec5550F68e80D94476fD64daE967",
 };
@@ -77,9 +85,17 @@ export const ZEROG: ChainTarget = {
   explorer: "https://chainscan.0g.ai",
   factory: "0x51c4168226463F7e5A141e1c6D30520734BC840a",
   factoryVersion: "0.11.0",
+  launchFactory: "0xEBbE0fB112859b57A0ad1afbeD4978e43dC96c5D",
+  launchFactoryVersion: "1.0.0",
   agentRegistry: "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
   protocolTreasury: "0x24268Fffc119ec5550F68e80D94476fD64daE967",
 };
+
+/**
+ * keccak256 runtime ADEXTO v1, identik di kelima chain (0G, Base, Arbitrum One, Monad,
+ * Robinhood Chain). Satu-satunya immutable-nya treasury, yang sama di mana-mana.
+ */
+export const V1_RUNTIME_KECCAK = "0x1ca02ca53a3b2a2082f9e5dab6924e1339110e3037608f750981699678881fd4";
 
 export const TARGETS: Record<string, ChainTarget> = {
   [MONAD.key]: MONAD,

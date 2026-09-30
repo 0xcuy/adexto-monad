@@ -735,6 +735,30 @@ The simulation that preceded this predicted 3,159,443 gas against 3,229,629 actu
 2.2% under. Recorded because the estimate is quoted elsewhere in this file's history, and a
 prediction is worth less once the real number exists.
 
+**Every new launch on Monad goes to ADEXTO v1.** `$PARCEL` stays on the `0.11.0` factory above
+and keeps its terms, because every fee leg is `immutable`. The probe checks both:
+
+```
+AdextoFactory        0x3dFcBEd7dd889F465cC9f75c430B43Ef873b6056   ADEXTO v1
+  VERSION            1.0.0
+  bytecode           21,806 bytes, keccak 0x1ca02ca53a3b2a2082f9e5dab6924e1339110e3037608f750981699678881fd4
+                     byte-identical on 0G, Base, Arbitrum One and Robinhood Chain
+  PROTOCOL_FEE_BPS   10, carved out of the configured total
+  AGENT_REGISTRY     0x8004A169FB4a3325136EB29fA0ceB6D2e539a432
+  protocolTreasury   0x24268Fffc119ec5550F68e80D94476fD64daE967
+  totalProjectsCount 0
+  deployed           block 109,440,540, tx 0x3c7f6259a4b47ffe03489e4fcf976e38e4930907758f2bc8fca649941462cc67
+
+deployTrinity        simulated clean, 3,278,039 gas, ~0.334 MON at 102 gwei, split 100/70/10 bps
+```
+
+v1 differs from `0.11.0` where a trader or an agent would notice: the 0.10% protocol leg is
+inside the configured total rather than added on top, the buyback can run at most once an hour,
+and for the first 180 seconds no wallet may hold more than 1% of supply. That window is measured
+in seconds, where `0.11.0` counted five blocks, which on Monad lasted about two seconds. The
+source is commit [`71b5adf`](https://github.com/0xcuy/adexto/commit/71b5adfe774ed7a93f9fe589b4430c8122febb1f),
+compiled with solc 0.8.37, and both Sourcify and Monadscan report it verified.
+
 ```
 $PARCEL curve       0x36F2E236Bd37830BbF52c1248DeE28770C8F4eCb
   virtualNative      174888.464882 MON     virtual, never deposited
@@ -857,8 +881,8 @@ address. Otherwise: `Factory: zero agent`.
 | `symbol` | 1–12 bytes, unique per chain, claimed **permanently** |
 | `name` | 1–64 bytes |
 | `virtualNative` | greater than zero |
-| `swapFeeBps` | `swapFeeBps + PROTOCOL_FEE_BPS <= 500` |
-| shares | `creatorShareBps + treasuryShareBps <= swapFeeBps` |
+| `swapFeeBps` | ADEXTO v1: `swapFeeBps <= 500`. `0.11.0`: `swapFeeBps + PROTOCOL_FEE_BPS <= 500` |
+| shares | ADEXTO v1: `creatorShareBps + treasuryShareBps + PROTOCOL_FEE_BPS <= swapFeeBps`. `0.11.0`: `creatorShareBps + treasuryShareBps <= swapFeeBps` |
 | `agentId` | `0` unless `bindAgent` is set |
 | agent ownership | with `bindAgent`, registry `ownerOf(agentId)` must be the caller |
 
