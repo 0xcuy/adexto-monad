@@ -5,7 +5,7 @@
   "description": "Monad delivery leg for ADEXTO x402 cross-chain buys: pay USDC on Base, receive a bonding-curve token on Monad.",
   "type": "module",
   "engines": {
-    "node": ">=22.6"
+    "node": ">=22.18"
   },
   "scripts": {
     "probe": "node scripts/probe.ts",

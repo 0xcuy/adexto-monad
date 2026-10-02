@@ -278,5 +278,7 @@ relayer key can sit in a worker environment at all.
 ## Related
 
 - [`README.md`](../README.md) — overview, status matrix, verified chain reads
+- [`X402.md`](X402.md) — the buy path from Base, its diagrams, and the delivery history
+- [`MARKET-STRUCTURE.md`](MARKET-STRUCTURE.md) · [`ENVIO.md`](ENVIO.md) · [`PARCEL.md`](PARCEL.md) · [`METROPOLIS.md`](METROPOLIS.md)
 - [`0xcuy/adexto`](https://github.com/0xcuy/adexto) — curve, factory, registry, web app
 - [`adexto.xyz/x402`](https://adexto.xyz/x402) — the integration reference for the live endpoint

@@ -1,0 +1,102 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 400" width="1280" height="400" role="img" aria-labelledby="t d">
+  <title id="t">ADEXTO on Monad</title>
+  <desc id="d">Markets for AI agents. One gas-only transaction, no deposit, no admin key.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0B0716"/>
+      <stop offset="0.55" stop-color="#1D0B4A"/>
+      <stop offset="1" stop-color="#3A1C93"/>
+    </linearGradient>
+    <radialGradient id="glowA" cx="0.85" cy="0.15" r="0.55">
+      <stop offset="0" stop-color="#836EF9" stop-opacity="0.55"/>
+      <stop offset="1" stop-color="#836EF9" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="glowB" cx="0.05" cy="1" r="0.5">
+      <stop offset="0" stop-color="#A855F7" stop-opacity="0.35"/>
+      <stop offset="1" stop-color="#A855F7" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="curve" x1="0" y1="1" x2="1" y2="0">
+      <stop offset="0" stop-color="#836EF9"/>
+      <stop offset="1" stop-color="#F0ABFC"/>
+    </linearGradient>
+    <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+      <path d="M40 0H0V40" fill="none" stroke="#FFFFFF" stroke-opacity="0.05" stroke-width="1"/>
+    </pattern>
+    <filter id="soft" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="4"/>
+    </filter>
+    <clipPath id="frame">
+      <rect width="1280" height="400" rx="28"/>
+    </clipPath>
+    <mask id="adx-cut" maskUnits="userSpaceOnUse" x="0" y="0" width="512" height="512">
+      <rect width="512" height="512" fill="#fff"/>
+      <g transform="rotate(-14 256 286)"><path d="M76,286 a180,66 0 1 0 360,0 a180,66 0 1 0 -360,0 Z M99,276 a169,55 0 1 0 338,0 a169,55 0 1 0 -338,0 Z" fill="none" stroke="#000" stroke-width="20" stroke-linejoin="round"/></g>
+      <circle cx="388" cy="302" r="34" fill="none" stroke="#000" stroke-width="20"/>
+    </mask>
+  </defs>
+
+  <g clip-path="url(#frame)">
+    <rect width="1280" height="400" fill="url(#bg)"/>
+    <rect width="1280" height="400" fill="url(#grid)"/>
+    <rect width="1280" height="400" fill="url(#glowA)"/>
+    <rect width="1280" height="400" fill="url(#glowB)"/>
+
+    <!-- ADEXTO mark -->
+    <svg x="72" y="78" width="96" height="96" viewBox="74 77 364 364">
+      <g fill="#FFFFFF">
+        <path d="M256,104 L438,414 L350,414 L256,214 L162,414 L74,414 Z" mask="url(#adx-cut)"/>
+        <g transform="rotate(-14 256 286)"><path d="M76,286 a180,66 0 1 0 360,0 a180,66 0 1 0 -360,0 Z M99,276 a169,55 0 1 0 338,0 a169,55 0 1 0 -338,0 Z" fill-rule="evenodd"/></g>
+        <circle cx="388" cy="302" r="34"/>
+      </g>
+    </svg>
+
+    <g font-family="Inter, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif">
+      <text x="190" y="150" font-size="68" font-weight="800" letter-spacing="3" fill="#FFFFFF">ADEXTO</text>
+
+      <!-- Monad mark, then the chain name -->
+      <svg x="192" y="171" width="30" height="30" viewBox="0 0 24 24">
+        <path fill="#B9A9FF" d="M12 3c-2.599 0-9 6.4-9 9s6.401 9 9 9 9-6.401 9-9-6.401-9-9-9m-1.402 14.146c-1.097-.298-4.043-5.453-3.744-6.549s5.453-4.042 6.549-3.743c1.095.298 4.042 5.453 3.743 6.549-.298 1.095-5.453 4.042-6.549 3.743"/>
+      </svg>
+      <text x="232" y="196" font-size="34" font-weight="600" fill="#C9BEFF">on Monad</text>
+
+      <text x="72" y="262" font-size="32" font-weight="700" fill="#FFFFFF">Markets for AI agents</text>
+      <text x="72" y="298" font-size="19" font-weight="500" fill="#D6CFFA">One gas-only transaction · no deposit · no admin key</text>
+
+      <!-- chips -->
+      <g font-size="15" font-weight="600" fill="#EDE9FE">
+        <rect x="72" y="326" width="168" height="34" rx="17" fill="#FFFFFF" fill-opacity="0.08" stroke="#B9A9FF" stroke-opacity="0.45"/>
+        <text x="156" y="348" text-anchor="middle">ERC-8004 identity</text>
+        <rect x="252" y="326" width="140" height="34" rx="17" fill="#FFFFFF" fill-opacity="0.08" stroke="#B9A9FF" stroke-opacity="0.45"/>
+        <text x="322" y="348" text-anchor="middle">MCP · 10 tools</text>
+        <rect x="404" y="326" width="184" height="34" rx="17" fill="#FFFFFF" fill-opacity="0.08" stroke="#B9A9FF" stroke-opacity="0.45"/>
+        <text x="496" y="348" text-anchor="middle">x402 · USDC on Base</text>
+        <rect x="600" y="326" width="190" height="34" rx="17" fill="#16A34A" fill-opacity="0.22" stroke="#4ADE80" stroke-opacity="0.6"/>
+        <text x="695" y="348" text-anchor="middle">Sourcify exact match</text>
+      </g>
+    </g>
+
+    <!-- bonding curve panel -->
+    <g>
+      <rect x="812" y="60" width="400" height="280" rx="20" fill="#FFFFFF" fill-opacity="0.045" stroke="#836EF9" stroke-opacity="0.4"/>
+      <g font-family="Inter, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif">
+        <text x="840" y="96" font-size="15" font-weight="600" fill="#C9BEFF">bonding curve · price</text>
+        <text x="1188" y="324" font-size="13" font-weight="500" fill="#C9BEFF" fill-opacity="0.8" text-anchor="end">supply sold →</text>
+      </g>
+      <path d="M842 300 H1188 M842 300 V112" stroke="#FFFFFF" stroke-opacity="0.18" stroke-width="1.5" fill="none"/>
+      <path d="M846 296 Q1010 292 1184 268" stroke="#4ADE80" stroke-opacity="0.75" stroke-width="2" stroke-dasharray="6 6" fill="none"/>
+      <text x="1184" y="258" font-family="Inter, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="12" font-weight="600" fill="#86EFAC" text-anchor="end">floor only rises</text>
+      <path d="M846 294 C 970 290, 1080 246, 1182 120" stroke="url(#curve)" stroke-width="9" stroke-linecap="round" fill="none" opacity="0.35" filter="url(#soft)"/>
+      <path d="M846 294 C 970 290, 1080 246, 1182 120" stroke="url(#curve)" stroke-width="4" stroke-linecap="round" fill="none"/>
+      <g fill="#FFFFFF">
+        <circle cx="900" cy="290" r="5"/>
+        <circle cx="972" cy="282" r="5"/>
+        <circle cx="1040" cy="262" r="5"/>
+        <circle cx="1098" cy="226" r="5"/>
+        <circle cx="1146" cy="174" r="6"/>
+      </g>
+      <g fill="#F0ABFC" opacity="0.5" filter="url(#soft)">
+        <circle cx="1146" cy="174" r="12"/>
+      </g>
+    </g>
+  </g>
+</svg>
