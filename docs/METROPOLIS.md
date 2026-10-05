@@ -2,8 +2,9 @@
 
 > [!NOTE]
 > Moved out of the README on 2 October 2026. The in-window table stops at 14 September, when it was written; the
-> work since (ADEXTO v1 on Monad, SAi Monad, per-market staking, the stake hub) is in the README and in the
-> parent repository's history.
+> work since (ADEXTO v1 on Monad, SAi Monad, per-market staking, the stake hub, `$LOOP` launched by an agent
+> over MCP, and the Envio indexer following the v1 factory) is in the README and in the parent repository's
+> history.
 
 Built for [Monad Metropolis](https://monad.xyz/developers/hackathons/metropolis), build
 window 1 September to 13 October 2026.

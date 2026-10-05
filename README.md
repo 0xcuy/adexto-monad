@@ -13,7 +13,7 @@
 <p align="center">
   <a href="https://adexto.xyz/token/sai?chain=143"><img src="https://img.shields.io/badge/Monad_Mainnet-live-836EF9?style=for-the-badge" alt="Live on Monad Mainnet"></a>
   <a href="https://repo.sourcify.dev/143/0x3dFcBEd7dd889F465cC9f75c430B43Ef873b6056"><img src="https://img.shields.io/badge/Sourcify-exact_match-16A34A?style=for-the-badge" alt="Sourcify exact match"></a>
-  <a href="https://adexto.xyz/mcp"><img src="https://img.shields.io/badge/MCP-10_tools-111827?style=for-the-badge" alt="MCP server with ten tools"></a>
+  <a href="https://adexto.xyz/mcp"><img src="https://img.shields.io/badge/MCP-14_tools-111827?style=for-the-badge" alt="MCP server with fourteen tools"></a>
   <a href="https://adexto.xyz/x402"><img src="https://img.shields.io/badge/x402-pay_USDC_on_Base-0052FF?style=for-the-badge" alt="x402: pay with USDC on Base"></a>
   <a href="#indexing-monad-with-envio"><img src="https://img.shields.io/badge/Envio-HyperIndex-1A8F6B?style=for-the-badge" alt="Indexed with Envio HyperIndex"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-6B7280?style=for-the-badge" alt="MIT license"></a>
@@ -38,7 +38,7 @@
 
 | | Step | What happens | Read it on chain |
 |:-:|---|---|---|
-| 🚀 | **Open** | The agent calls `deployTrinity` with its ERC-8004 `agentId`, and the factory refuses unless `ownerOf(agentId)` is the caller. Nothing is deposited: the token opens inside a bonding curve against a virtual reserve, with 100% of supply in the curve | `agentIdOf(token)` · `AgentBound` |
+| 🚀 | **Open** | The agent calls `deployTrinity` with its ERC-8004 `agentId`, directly or through MCP `prepare_launch`, which returns the launch unsigned for the agent to sign with its own key. The factory refuses unless `ownerOf(agentId)` is the caller. Nothing is deposited: the token opens inside a bonding curve against a virtual reserve, with 100% of supply in the curve | `agentIdOf(token)` · `AgentBound` |
 | 💸 | **Earn** | The launching address is the curve's immutable `creator` and takes a fixed share of every trade, **0.70%** on the Studio's standard preset, claimable in MON. It holds zero tokens | `creatorOwed()` · `claimCreatorFees()` |
 | 🤝 | **Get bought** | Another agent finds the market over MCP, gets an HTTP 402 quote and signs a USDC authorization on Base with its own wallet. The token lands on Monad **before** the payment settles | `buy_token` at `adexto.xyz/api/mcp` |
 | 🔑 | **Stake for compute** | Any holder can stake the token. An active stake opens the market's agent over MCP and an API key for model calls | `stakedOf` · `isActive` |
@@ -61,10 +61,20 @@ already is.
     </td>
   </tr>
   <tr>
+    <td width="96" align="center"><img src="docs/assets/loop.png" width="72" alt="Loop logo"></td>
+    <td>
+      <b><a href="https://adexto.xyz/token/loop?chain=143">Loop</a></b> &nbsp;<code>$LOOP</code> &nbsp;·&nbsp; ADEXTO v1<br>
+      Opened by an agent over MCP with its own key. Loop Agent registered its own ERC-8004 identity, <b>#10276</b>,
+      then launched $LOOP bound to it through <code>prepare_launch</code> and <code>register_launch</code>, and holds zero $LOOP.
+      A second agent wallet of ours bought it over x402 and staked it in the stake hub.
+      <a href="https://youtu.be/dNT71mulFP4">Filmed on mainnet</a>.
+    </td>
+  </tr>
+  <tr>
     <td width="96" align="center"><img src="docs/assets/parcel.png" width="72" alt="Parcel Market logo"></td>
     <td>
       <b><a href="https://adexto.xyz/token/parcel?chain=143&tf=900">Parcel Market</a></b> &nbsp;<code>$PARCEL</code> &nbsp;·&nbsp; factory <code>0.11.0</code><br>
-      The first market here, bound to agent <b>#10251</b>. <b>18 trades</b> with sells among them, two paid cross-chain
+      The first market here, bound to agent <b>#10251</b>. <b>19 trades</b> with sells among them, two paid cross-chain
       fills, and the first position in Monad's stake hub. Nearly every trade is ours, and the
       <a href="docs/PARCEL.md">first session is recorded trade by trade</a>.
     </td>
@@ -123,11 +133,12 @@ More: [market structure and the trading terminal](docs/MARKET-STRUCTURE.md).
 
 ## 🌉 The cross-chain buys that actually happened
 
-Each row is one HTTP request that moved money on two chains. The buyer held USDC on Base, never held MON,
-and sent no transaction of their own.
+Each row is one HTTP request that moved money on two chains. Each buyer paid with USDC on Base, needed no MON
+to buy, and sent no transaction for the purchase.
 
 | Market | Paid on Base | Delivered on Monad | Received |
 |---|---|---|---|
+| $LOOP · 3 Oct 2026 | [`0xf08d88ca…1cb363`](https://basescan.org/tx/0xf08d88ca4997cf94aecff41b0680d790078c5ad154a12ba08d36cd071e1cb363) | [`0x05cc600f…d9013b`](https://monadscan.com/tx/0x05cc600f0e6cf2ce1b332847edede46519af5a652cc325ca137a2ff7a5d9013b) | 23,999.10 $LOOP |
 | SAi Monad · 1 Oct 2026 | [`0x1835d4ba…49bff9`](https://basescan.org/tx/0x1835d4badfb883f2b7a4e611fc5bf9e3550eee076b4bc42f297529e47349bff9) | [`0x9136fe63…70c42a`](https://monadscan.com/tx/0x9136fe638856f7d8f79d18b02e69cbd4ea8cb21b7972a67263c0d3807470c42a) | 24,164.79 $SAI |
 | $PARCEL · 13 Sep 2026 | [`0xfb744ca0…1b78f5da`](https://basescan.org/tx/0xfb744ca03aa5e755c297e7f1c088407dd55786023334f53d6cad10fb1b78f5da) | [`0x2b9540f8…aaf21e08`](https://monadscan.com/tx/0x2b9540f8bc2f34030d23d83b4ae7d96e5d687c8780a12d1cb2643677aaf21e08) | 24,034.29 $PARCEL |
 | $PARCEL · 13 Sep 2026 | [`0xf95c7c66…7290f190`](https://basescan.org/tx/0xf95c7c66fab2fbc5b56b902fccba583d5f3def1538a8891883766b4e7290f190) | [`0x4df10f36…bd67088e`](https://monadscan.com/tx/0x4df10f36232107e52dbb925f9c056435ec4806d8068e00a84d732ba1bd67088e) | 24,091.24 $PARCEL |
@@ -167,18 +178,20 @@ the key was credited 1,059 tokens, served requests, then switched itself off und
 
 The Graph does not serve Monad, and Monad's public RPC caps `eth_getLogs` at 100 blocks, so rebuilding a
 market's history over RPC takes about six hours. [Envio HyperIndex](https://github.com/0xcuy/adexto/tree/main/envio)
-pulled the same 1.93 million blocks in **under 45 seconds**. It indexes factory `0.11.0` and every curve it
-deploys (launches, swaps, burns, fee claims and ERC-8004 bindings) and is public, anonymous and read-only:
+pulled the same 1.93 million blocks in **under 45 seconds**. It indexes both Monad factories, `0.11.0` and
+ADEXTO v1, and every curve they deploy (launches, swaps, burns, fee claims and ERC-8004 bindings), and is
+public, anonymous and read-only:
 
 ```bash
 curl -s -X POST https://adexto.xyz/api/indexer/graphql \
   -H 'content-type: application/json' \
-  -d '{"query":"{ Curve { id swapCount volumeNative totalProtocolFees } Swap_aggregate { aggregate { count } } }"}'
+  -d '{"query":"{ Curve { id curveVersion swapCount volumeNative totalProtocolFees } Swap_aggregate { aggregate { count } } }"}'
 ```
 
 Every figure was checked against what the curve contract stores, the live fee ledger included, and the
-check caught a real volume bug on the first run. On 2 October it answers `$PARCEL` `swapCount 18`, the same as
-`swapCount()` on chain. Following the v1 factory is next. The full story: [docs/ENVIO.md](docs/ENVIO.md).
+check caught a real volume bug on the first run. Adding the v1 factory meant a full reindex, checked against the
+chain again. On 5 October it answers `$PARCEL` `swapCount 19`, SAi Monad 1 and `$LOOP` 3, each equal to
+`swapCount()` on chain with equal volume. The full story: [docs/ENVIO.md](docs/ENVIO.md).
 
 <a id="check-it-yourself"></a>
 
@@ -211,15 +224,15 @@ node scripts/probe.ts 0g # the 0G benchmark, for comparison
   keccak    0x1ca02ca53a3b2a2082f9e5dab6924e1339110e3037608f750981699678881fd4  ok
   VERSION             1.0.0
   protocolTreasury    0x24268Fffc119ec5550F68e80D94476fD64daE967
-  totalProjectsCount  1
+  totalProjectsCount  2
   config vs chain: MATCH
-  simulating deployTrinity on ADEXTO v1 as 0x4d6a…117A
+  simulating deployTrinity on ADEXTO v1 as 0x2cFD…9ba7
     staticCall   PASSED
-    estimateGas  3260904 gas @ 102.0 gwei = ~0.332612208 MON
-  verdict: launch path READY, config matches the chain, markets on the market factory 2, on ADEXTO v1 1
+    estimateGas  3271790 gas @ 102.0 gwei = ~0.33372258 MON
+  verdict: launch path READY, config matches the chain, markets on the market factory 2, on ADEXTO v1 2
 ```
 
-Output from 2 October 2026, trimmed. `staticCall` and `estimateGas` run the launch on a node and discard it, so
+Output from 5 October 2026, trimmed. `staticCall` and `estimateGas` run the launch on a node and discard it, so
 a broken path reverts without spending gas and no test token is ever created by accident.
 
 ## 🛡️ What the contracts guarantee
@@ -243,15 +256,14 @@ and nothing here claims one. Review scope: [`audit/README.md`](https://github.co
 |:-:|---|---|
 | ✅ | ADEXTO v1 factory on Monad | Live. Probe passes, Sourcify exact match |
 | ✅ | SAi Monad, the first v1 market here | Launched by an agent wallet bound to #10275, bought over x402, staked |
-| ✅ | $PARCEL on `0.11.0` | Live, 18 trades, two paid cross-chain fills |
-| ✅ | Buy with USDC on Base, receive on Monad | Three paid deliveries, delivery first and charge second |
-| ✅ | MCP server for agents | Ten tools. `buy_token` takes the agent's own signature; `pay_and_buy` signs with our key, needs an API key and is capped at 0.20 USDC |
+| ✅ | $LOOP, opened by an agent over MCP | Loop Agent #10276 launched it with its own key; a second agent bought it over x402 and staked it |
+| ✅ | $PARCEL on `0.11.0` | Live, 19 trades, two paid cross-chain fills |
+| ✅ | Buy with USDC on Base, receive on Monad | Four paid deliveries, delivery first and charge second |
+| ✅ | MCP server for agents | Fourteen tools. An agent can launch, stake and claim with its own key: the server returns unsigned transactions. `buy_token` takes the agent's own signature; `pay_and_buy` signs with our key, needs an API key and is capped at 0.20 USDC |
 | ✅ | Staking on every market, and `ask_agent` | SAi Monad's own stake, and the stake hub for every other market |
 | ✅ | Agent Compute keys | Tiered on SAi Monad, funded by trading on hub markets |
-| ✅ | Envio HyperIndex, public GraphQL | Live for the `0.11.0` factory |
-| 🟡 | Buyback-and-burn on Monad | Callable by anyone. Neither Monad vault has reached the gas threshold yet, so the burn is proven on 0G and not here |
-| ⏭️ | Envio follows the v1 factory | Next. v1 markets are read from logs through Alchemy's Monad endpoint until then |
-| ⏭️ | An MCP tool that opens a market | Next. A direct contract call works today |
+| ✅ | Envio HyperIndex, public GraphQL | Live for both factories, `0.11.0` and v1. Every live Monad market matches its curve |
+| 🟡 | Buyback-and-burn on Monad | Callable by anyone. No Monad vault has reached the gas threshold yet, so the burn is proven on 0G and not here |
 | ❌ | Third-party audit | Not done, and not claimed |
 
 <details>

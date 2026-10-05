@@ -2,12 +2,25 @@
 
 > [!NOTE]
 > The long version of the README's Envio section, moved here on 2 October 2026. The comparison table is a dated
-> record: re-run the method rather than quoting the numbers. The indexer covers the `0.11.0` factory and every
-> curve it deploys; following the v1 factory as well is the next step.
+> record: re-run the method rather than quoting the numbers. Since 5 October 2026 the indexer covers both Monad
+> factories, `0.11.0` and ADEXTO v1, and every curve they deploy.
 
 Source: [`envio/`](https://github.com/0xcuy/adexto/tree/main/envio) in the parent repo. Indexes
-`AdextoFactory` 0.11.0 and every curve it deploys — launches, swaps, buyback burns, fee claims,
-ERC-8004 bindings.
+`AdextoFactory` 0.11.0 and 1.0.0 (ADEXTO v1) and every curve they deploy — launches, swaps, buyback
+burns, fee claims, ERC-8004 bindings. Both generations emit the same events, so one set of handlers
+serves both, and each curve's `curveVersion` comes from the address of the factory that launched it.
+
+## ADEXTO v1, added on 5 October 2026
+
+Adding the v1 factory meant rebuilding the index from scratch, so it was checked against the chain again
+rather than assumed. On a separate local stack, `VERSION`, `swapCount`, `totalVolumeNative` and
+`totalDepthFeesRetained` matched the chain for every Monad curve: `$PARCEL` and `$CURB` on `0.11.0`, SAi
+Monad and `$LOOP` on v1, a sell included. In production the reindex covered 8.2 million blocks and was back
+at the chain head within three minutes. Read from the public endpoint afterwards: `$PARCEL` 19 swaps,
+SAi Monad 1 and `$LOOP` 3, each with `curveVersion` matching its factory and `volumeNative` equal to
+`totalVolumeNative()`, and `Swap_aggregate` over the four Monad curves at 28, the sum of their
+`swapCount()`. The trade API and the MCP `trade_history` tool now serve all three live markets from the
+index with zero `eth_getLogs` calls.
 
 ## Why a separate indexer and not one more network on the subgraph
 
